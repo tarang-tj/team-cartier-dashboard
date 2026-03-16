@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Cartier — Financial Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2330;
+    --accent: #c8a96e;
+    --accent2: #4fc3a1;
+    --accent3: #e07b6a;
+    --accent4: #7b9cde;
+    --text: #e8e6e0;
+    --muted: #6b7280;
+    --green: #4fc3a1;
+    --red: #e07b6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .header-left p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .header-right span {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    padding: 40px 48px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-left: 2px;
+  }
+
+  /* KPI STRIP */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    padding: 24px 20px;
+    position: relative;
+    transition: background 0.2s;
+  }
+
+  .kpi-card:hover { background: var(--surface2); }
+
+  .kpi-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 10px;
+  }
+
+  .kpi-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .kpi-delta {
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .kpi-delta.up { background: rgba(79,195,161,0.12); color: var(--green); }
+  .kpi-delta.down { background: rgba(224,123,106,0.12); color: var(--red); }
+
+  .kpi-accent-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  /* CHART GRID */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.3;
+  }
+
+  .chart-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .chart-subtitle {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 24px;
+    letter-spacing: 0.05em;
+  }
+
+  .chart-container {
+    position: relative;
+    width: 100%;
+  }
+
+  /* INSIGHT PILLS */
+  .insight-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .insight-pill {
+    font-size: 0.67rem;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .insight-pill.warn { border-color: rgba(224,123,106,0.4); color: var(--red); background: rgba(224,123,106,0.06); }
+  .insight-pill.good { border-color: rgba(79,195,161,0.4); color: var(--green); background: rgba(79,195,161,0.06); }
+  .insight-pill.gold { border-color: rgba(200,169,110,0.4); color: var(--accent); background: rgba(200,169,110,0.06); }
+
+  /* SCATTER LEGEND */
+  .scatter-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    letter-spacing: 0.08em;
+  }
+
+  footer span { color: var(--accent); }
+
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
+    main { padding: 24px; }
+    header { padding: 20px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Team Cartier</h1>
+    <p>Financial Performance Dashboard · FY2024 Wholesale Distribution</p>
+  </div>
+  <div class="header-right">
+    <div>Forecast vs Actual Analysis</div>
+    <div>25+ Expense Categories · <span>$15.3M Revenue</span></div>
+    <div>Budget Variance · P&amp;L · Investment</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- KPI STRIP -->
+  <div class="section-label">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value">$15.3M</div>
+      <span class="kpi-delta up">↑ 4.2%</span>
+      <div class="kpi-accent-bar" style="background:var(--accent)"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Net Revenue</div>
+      <div class="kpi-value">$13.7M</div>
+      <span class="kpi-delta up">↑ 3.8%</span>
+      <div class="kpi-accent-bar" style="background:var(--accent4)"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Gross Profit</div>
+      <div class="kpi-value">$4.1M</div>
+      <span class="kpi-delta up">↑ 5.1%</span>
+      <div class="kpi-accent-bar" style="background:var(--accent2)"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Operating Expenses</div>
+      <div class="kpi-value">$1.8M</div>
+      <span class="kpi-delta down">↑ 8.3%</span>
+      <div class="kpi-accent-bar" style="background:var(--accent3)"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Operating Income</div>
+      <div class="kpi-value">$2.3M</div>
+      <span class="kpi-delta up">↑ 2.9%</span>
+      <div class="kpi-accent-bar" style="background:var(--accent2)"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Net Margin</div>
+      <div class="kpi-value">15.0%</div>
+      <span class="kpi-delta up">↑ 0.4pp</span>
+      <div class="kpi-accent-bar" style="background:var(--accent)"></div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Revenue + P&L Waterfall -->
+  <div class="chart-grid">
+
+    <div class="chart-card">
+      <div class="chart-title">Revenue by Channel</div>
+      <div class="chart-subtitle">Forecast vs Actual — All Channels</div>
+      <div class="chart-container" style="height:260px">
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div class="insight-row">
+        <span class="insight-pill good">Warehouse +6.2%</span>
+        <span class="insight-pill good">Direct +3.1%</span>
+        <span class="insight-pill warn">Storage −1.4%</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">P&amp;L Waterfall</div>
+      <div class="chart-subtitle">Revenue → Operating Income Bridge</div>
+      <div class="chart-container" style="height:260px">
+        <canvas id="plChart"></canvas>
+      </div>
+      <div class="insight-row">
+        <span class="insight-pill gold">GP Margin 26.8%</span>
+        <span class="insight-pill good">OpInc Margin 15.0%</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: GP Margin + Top Expenses + Net Investment -->
+  <div class="chart-grid-3">
+
+    <div class="chart-card">
+      <div class="chart-title">Top 10 Expenses vs Budget</div>
+      <div class="chart-subtitle">Actual spend — orange bars exceed prior actual</div>
+      <div class="chart-container" style="height:300px">
+        <canvas id="expensesChart"></canvas>
+      </div>
+      <div class="insight-row">
+        <span class="insight-pill warn">Rent over-norm</span>
+        <span class="insight-pill warn">Bad Debt elevated</span>
+        <span class="insight-pill warn">Sales Exp. +12%</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">GP Margin by Channel</div>
+      <div class="chart-subtitle">Forecast % · Actual % · Norm %</div>
+      <div class="chart-container" style="height:300px">
+        <canvas id="marginChart"></canvas>
+      </div>
+      <div class="insight-row">
+        <span class="insight-pill good">Warehouse best margin</span>
+        <span class="insight-pill warn">Other below norm</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Net Investment</div>
+      <div class="chart-subtitle">Working capital components ($000s)</div>
+      <div class="chart-container" style="height:300px">
+        <canvas id="investmentChart"></canvas>
+      </div>
+      <div class="insight-row">
+        <span class="insight-pill warn">AR increased</span>
+        <span class="insight-pill good">AP favorable</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 3: Expense Ratio Scatter -->
+  <div style="margin-bottom:20px">
+    <div class="chart-card">
+      <div class="chart-title">Expense Ratio Analysis</div>
+      <div class="chart-subtitle">Forecast % of Revenue vs Norm % — points above diagonal are over-norm</div>
+      <div class="scatter-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div> Within norm</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div> Over-norm (concern)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--muted); opacity:0.5; width:40px; height:1px; border-radius:0"></div> Parity line</div>
+      </div>
+      <div class="chart-container" style="height:280px">
+        <canvas id="scatterChart"></canvas>
+      </div>
+      <div class="insight-row">
+        <span class="insight-pill warn">Rent</span>
+        <span class="insight-pill warn">Salaries</span>
+        <span class="insight-pill warn">Sales Expense</span>
+        <span class="insight-pill warn">Bad Debt</span>
+        <span class="insight-pill gold">10–16% reduction opportunity identified</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Team Cartier Financial Analytics · <span>FY2024 Case Competition</span> · Wholesale Distribution · All figures in USD
+</footer>
+
+<script>
+// ── SHARED DEFAULTS ──────────────────────────────────────────────
+Chart.defaults.color = '#6b7280';
+Chart.defaults.font.family = 'DM Mono, monospace';
+Chart.defaults.font.size = 11;
+
+const COLORS = {
+  gold:   '#c8a96e',
+  teal:   '#4fc3a1',
+  red:    '#e07b6a',
+  blue:   '#7b9cde',
+  purple: '#a78bde',
+  muted:  '#2a3040',
+  border: '#1e2330',
+};
+
+const gridOpts = {
+  color: 'rgba(255,255,255,0.04)',
+  drawBorder: false,
+};
+
+// ── 1. REVENUE BY CHANNEL ────────────────────────────────────────
+new Chart(document.getElementById('revenueChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Warehouse', 'Direct', 'Storage', 'Other'],
+    datasets: [
+      {
+        label: 'Forecast',
+        data: [8200, 3400, 2100, 1600],
+        backgroundColor: 'rgba(200,169,110,0.75)',
+        borderRadius: 4,
+        borderSkipped: false,
+      },
+      {
+        label: 'Actual',
+        data: [8710, 3505, 2071, 1514],
+        backgroundColor: 'rgba(79,195,161,0.75)',
+        borderRadius: 4,
+        borderSkipped: false,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { boxWidth: 10, padding: 16 } },
+      tooltip: { callbacks: { label: ctx => ` $${(ctx.raw/1000).toFixed(1)}M` } },
+    },
+    scales: {
+      x: { grid: gridOpts, border: { display: false } },
+      y: {
+        grid: gridOpts,
+        border: { display: false },
+        ticks: { callback: v => `$${(v/1000).toFixed(0)}M` },
+      },
+    },
+  },
+});
+
+// ── 2. P&L WATERFALL ─────────────────────────────────────────────
+new Chart(document.getElementById('plChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Total\nRevenue', 'COGS', 'Gross\nProfit', 'OpEx', 'Operating\nIncome'],
+    datasets: [{
+      data: [15300, -11200, 4100, -1800, 2300],
+      backgroundColor: [
+        'rgba(200,169,110,0.8)',
+        'rgba(224,123,106,0.8)',
+        'rgba(79,195,161,0.8)',
+        'rgba(224,123,106,0.8)',
+        'rgba(79,195,161,0.8)',
+      ],
+      borderRadius: 5,
+      borderSkipped: false,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const v = ctx.raw;
+            return ` $${Math.abs(v/1000).toFixed(1)}M`;
+          }
+        }
+      },
+    },
+    scales: {
+      x: { grid: gridOpts, border: { display: false } },
+      y: {
+        grid: gridOpts,
+        border: { display: false },
+        ticks: { callback: v => `$${Math.abs(v/1000).toFixed(0)}M` },
+      },
+    },
+  },
+});
+
+// ── 3. TOP 10 EXPENSES ────────────────────────────────────────────
+const expLabels = ['Salaries','Rent','Sales Expense','Bad Debt','Insurance','Utilities','Depreciation','Marketing','Supplies','Freight'];
+const expForecast = [620, 210, 185, 142, 98, 76, 65, 58, 44, 38];
+const expPrior    = [580, 195, 165, 110, 95, 72, 63, 52, 42, 36];
+const expColors   = expForecast.map((v,i) => v > expPrior[i] ? 'rgba(224,123,106,0.8)' : 'rgba(79,195,161,0.7)');
+
+new Chart(document.getElementById('expensesChart'), {
+  type: 'bar',
+  data: {
+    labels: expLabels,
+    datasets: [{
+      label: 'Forecast ($000s)',
+      data: expForecast,
+      backgroundColor: expColors,
+      borderRadius: 4,
+      borderSkipped: false,
+    }],
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` $${ctx.raw}K` } },
+    },
+    scales: {
+      x: { grid: gridOpts, border: { display: false }, ticks: { callback: v => `$${v}K` } },
+      y: { grid: { display: false }, border: { display: false } },
+    },
+  },
+});
+
+// ── 4. GP MARGIN BY CHANNEL ───────────────────────────────────────
+new Chart(document.getElementById('marginChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Warehouse', 'Direct', 'Storage', 'Other'],
+    datasets: [
+      { label: 'Forecast %', data: [32.1, 28.4, 22.6, 18.3], backgroundColor: 'rgba(200,169,110,0.75)', borderRadius: 4, borderSkipped: false },
+      { label: 'Actual %',   data: [33.2, 27.8, 21.9, 16.4], backgroundColor: 'rgba(79,195,161,0.75)',  borderRadius: 4, borderSkipped: false },
+      { label: 'Norm %',     data: [30.0, 27.0, 23.0, 19.0], backgroundColor: 'rgba(123,156,222,0.55)', borderRadius: 4, borderSkipped: false },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { boxWidth: 10, padding: 12 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.raw}%` } },
+    },
+    scales: {
+      x: { grid: gridOpts, border: { display: false } },
+      y: { grid: gridOpts, border: { display: false }, ticks: { callback: v => `${v}%` } },
+    },
+  },
+});
+
+// ── 5. NET INVESTMENT ─────────────────────────────────────────────
+new Chart(document.getElementById('investmentChart'), {
+  type: 'bar',
+  data: {
+    labels: ['AR', 'Inventory', 'AP', 'Leasehold'],
+    datasets: [{
+      data: [420, 310, -185, 95],
+      backgroundColor: [
+        'rgba(224,123,106,0.8)',
+        'rgba(224,123,106,0.7)',
+        'rgba(79,195,161,0.8)',
+        'rgba(200,169,110,0.7)',
+      ],
+      borderRadius: 5,
+      borderSkipped: false,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` $${ctx.raw > 0 ? '+' : ''}${ctx.raw}K` } },
+    },
+    scales: {
+      x: { grid: gridOpts, border: { display: false } },
+      y: {
+        grid: gridOpts,
+        border: { display: false },
+        ticks: { callback: v => `$${v}K` },
+      },
+    },
+  },
+});
+
+// ── 6. EXPENSE RATIO SCATTER ──────────────────────────────────────
+const scatterData = [
+  { x: 4.1,  y: 3.8,  label: 'Salaries',     over: true  },
+  { x: 1.4,  y: 1.3,  label: 'Rent',         over: true  },
+  { x: 1.2,  y: 1.0,  label: 'Sales Exp.',   over: true  },
+  { x: 0.93, y: 0.72, label: 'Bad Debt',     over: true  },
+  { x: 0.64, y: 0.62, label: 'Insurance',    over: false },
+  { x: 0.50, y: 0.52, label: 'Utilities',    over: false },
+  { x: 0.42, y: 0.44, label: 'Depreciation', over: false },
+  { x: 0.38, y: 0.40, label: 'Marketing',    over: false },
+  { x: 0.29, y: 0.31, label: 'Supplies',     over: false },
+  { x: 0.25, y: 0.27, label: 'Freight',      over: false },
+];
+
+// parity line
+const minV = 0, maxV = 5;
+
+new Chart(document.getElementById('scatterChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: 'Over-norm',
+        data: scatterData.filter(d => d.over),
+        backgroundColor: 'rgba(224,123,106,0.85)',
+        pointRadius: 8,
+        pointHoverRadius: 10,
+      },
+      {
+        label: 'Within norm',
+        data: scatterData.filter(d => !d.over),
+        backgroundColor: 'rgba(79,195,161,0.75)',
+        pointRadius: 7,
+        pointHoverRadius: 9,
+      },
+      {
+        label: 'Parity',
+        data: [{ x: minV, y: minV }, { x: maxV, y: maxV }],
+        type: 'line',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderDash: [5, 5],
+        pointRadius: 0,
+        borderWidth: 1.5,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const d = scatterData.find(s => s.x === ctx.parsed.x);
+            return d ? ` ${d.label}: Forecast ${ctx.parsed.x}% vs Norm ${ctx.parsed.y}%` : '';
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: gridOpts,
+        border: { display: false },
+        title: { display: true, text: 'Forecast % of Revenue', color: '#6b7280' },
+        ticks: { callback: v => `${v}%` },
+      },
+      y: {
+        grid: gridOpts,
+        border: { display: false },
+        title: { display: true, text: 'Norm % of Revenue', color: '#6b7280' },
+        ticks: { callback: v => `${v}%` },
+      },
+    },
+  },
+});
+</script>
+</body>
+</html>
